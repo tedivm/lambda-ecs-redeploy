@@ -1,0 +1,6 @@
+
+steps:
+  - command: "./bin/push_to_ecr.sh"
+    agents:
+      queue: "containers"
+    branches: "master main"
