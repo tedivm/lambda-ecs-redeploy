@@ -117,13 +117,13 @@ def validate_reload_tag(service_description):
 
 def redeploy_lambdas_with_image(image):
   for lambda_details in get_container_lambdas():
-    tag_response = lambda_client.list_tags(
+    function_response = lambda_client.get_function(
       Resource=lambda_details['FunctionArn']
     )
-    if tag_response['Tags'].get('AutoDeploy', False).lower() != "true":
+    if function_response['Tags'].get('AutoDeploy', False).lower() != "true":
       continue
 
-    if tag_response['Tags'].get('Image', False).lower() != image:
+    if function_response['Code'].get('ImageUri', False) != image:
       continue
 
     print(f"Redeploying {lambda_details['FunctionName']}")
