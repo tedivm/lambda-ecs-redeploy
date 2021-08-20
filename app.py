@@ -128,7 +128,7 @@ def redeploy_lambdas_with_image(image):
 
     print(f"Redeploying {lambda_details['FunctionName']}")
     lambda_client.update_function_code(
-      FunctionName=lambda_details['FunctionArn'],
+      FunctionName=lambda_details['FunctionName'],
       ImageUri=image,
       Publish=True
     )
