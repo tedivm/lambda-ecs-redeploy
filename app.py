@@ -31,13 +31,13 @@ def handler(event, context):
 
   # Redeploy Lambdas
   # Lambdas have to be in the same account-region to load, so we assume replication
-  lambda_image = f"{registry_account}.dkr.ecr.{CURRENT_AWS_REGION}.amazonaws.com/{repository_name}:{repository_tag}"
+  lambda_image = f"{CURRENT_AWS_ACCOUNT}.dkr.ecr.{CURRENT_AWS_REGION}.amazonaws.com/{repository_name}:{repository_tag}"
   print(f"Attempting to deploy lambdas using image '{lambda_image}'")
   redeploy_lambdas_with_image(lambda_image)
 
   # Redeploy Services
   # ECS can deploy from registries in other regions so we stick with the original
-  ecs_image = f"{CURRENT_AWS_ACCOUNT}.dkr.ecr.{registry_region}.amazonaws.com/{repository_name}:{repository_tag}"
+  ecs_image = f"{registry_account}.dkr.ecr.{registry_region}.amazonaws.com/{repository_name}:{repository_tag}"
   print(f"Attempting to deploy services using image '{ecs_image}'")
   redeploy_services_with_image(ecs_image)
 
@@ -118,7 +118,7 @@ def validate_reload_tag(service_description):
 def redeploy_lambdas_with_image(image):
   for lambda_details in get_container_lambdas():
     tag_response = lambda_client.list_tags(
-      Resources=lambda_details['FunctionArn']
+      Resource=lambda_details['FunctionArn']
     )
     if tag_response['Tags'].get('AutoDeploy', False).lower() != "true":
       continue
