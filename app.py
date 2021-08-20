@@ -13,7 +13,7 @@ lambda_client = boto3.client('lambda')
 
 
 def handler(event, context):
-  print(f"Received event: {json.dumps(event, indent=4, sort_keys=True)}")
+  print(f"Received event: {event['detail-type']}")
 
   if event['detail-type'] != "ECR Image Action":
     print(f"Expected detail-type 'ECR Image Action', got '{event['detail-type']}'")
