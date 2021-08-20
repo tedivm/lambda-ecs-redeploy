@@ -5,6 +5,9 @@ import boto3
 
 CONFIG_TAG_NAME = os.environ.get("CONFIG_TAG_NAME", "AutoDeploy")
 
+CURRENT_AWS_REGION = boto3.session.Session().region_name
+CURRENT_AWS_ACCOUNT = boto3.client('sts').get_caller_identity().get('Account')
+
 ecs_client = boto3.client('ecs')
 lambda_client = boto3.client('lambda')
 
@@ -16,21 +19,27 @@ def handler(event, context):
     print(f"Expected detail-type 'ECR Image Action', got '{event['detail-type']}'")
     return False
 
-  if event['detail']['result'] != "Success":
-    print(f"Expected detail result 'Success', got '{event['detail']['result']}'")
+  if event['detail']['result'] != "SUCCESS":
+    print(f"Expected detail result 'success', got '{event['detail']['result']}'")
     return False
 
-  detail = event['detail']
-  image = f"{detail['repository-name']}:{detail['image-tag']}"
+  registry_account = event['account']
+  registry_region = event['region']
+  repository_name = event['detail']['repository-name']
+  repository_tag = event['detail']['image-tag']
 
 
   # Redeploy Lambdas
-  print(f"Attempting to deploy lambdas using image '{image}'")
-  redeploy_lambdas_with_image(image)
+  # Lambdas have to be in the same account-region to load, so we assume replication
+  lambda_image = f"{registry_account}.dkr.ecr.{CURRENT_AWS_REGION}.amazonaws.com/{repository_name}:{repository_tag}"
+  print(f"Attempting to deploy lambdas using image '{lambda_image}'")
+  redeploy_lambdas_with_image(lambda_image)
 
   # Redeploy Services
-  print(f"Attempting to deploy services using image '{image}'")
-  redeploy_services_with_image(image)
+  # ECS can deploy from registries in other regions so we stick with the original
+  ecs_image = f"{CURRENT_AWS_ACCOUNT}.dkr.ecr.{registry_region}.amazonaws.com/{repository_name}:{repository_tag}"
+  print(f"Attempting to deploy services using image '{ecs_image}'")
+  redeploy_services_with_image(ecs_image)
 
   return
 
